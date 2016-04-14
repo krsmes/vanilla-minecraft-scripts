@@ -18,6 +18,7 @@ start() {
 
 start_new_world() {
 	echo "##  Creating new world..."
+	new_world
 	start
 	sleep 3
 }

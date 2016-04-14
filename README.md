@@ -32,3 +32,14 @@ script).
 The `loop.sh` script is an example usage of both the `library.sh` and 
 the `eventtail.gsh` to generate a new world every 3 hours, but carry a
 player's inventory forward from world to world.
+
+## Resources
+
+1. Groovy: http://www.groovy-lang.org/documentation.html
+    * Groovy Shebang: http://docs.groovy-lang.org/latest/html/documentation/#_shebang_line
+    * Grape/Grab: http://docs.groovy-lang.org/latest/html/documentation/grape.html
+1. Java NBT library: https://github.com/flow/nbt
+1. screen: https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man1/screen.1.html
+    * `stuff`: http://stackoverflow.com/questions/13829310/shell-gnu-screen-x-stuff-problems/13870705
+1. bash libraries: https://bash.cyberciti.biz/guide/Shell_functions_library
+1. Minecraft commands: http://minecraft.gamepedia.com/Commands

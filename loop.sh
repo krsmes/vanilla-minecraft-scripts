@@ -3,20 +3,20 @@
 loop_sh_dir=`dirname "${BASH_SOURCE[0]}"`
 
 ##
-## this script uses mc.sh to endlessly loop and
-## generate a new world every three hours
+## This script uses library.sh to endlessly loop 
+## and generate a new world every three hours.
 ##
-## it also runs the eventtail.gsh groovy script
+## It also runs the eventtail.gsh groovy script
 ## to which handles minecraft events by tailing
-## the minecraft log file
+## the minecraft log file.
 ##
-## one of the handlers in eventtail.gsh causes
+## One of the handlers in eventtail.gsh causes
 ## a players inventory to be transferred forward
 ## to the new world (assuming it gets saved
 ## to the playerdata folder, which mc.sh 
-## save_playerdata() does)
+## save_playerdata() does).
 ##
-## NOTE: if you ctrl-C to kill the loop:
+## NOTE: If you ctrl-C to kill the loop:
 ##       the world will not be stopped,
 ##       save_playerdata will not be called,
 ##       eventtail.gsh will not be killed
@@ -54,7 +54,7 @@ wait_3_hours() {
 	send 'say 1 minute to go'
 	sleep 30
 	send 'say 30 seconds to go'
-	sleep 20
+	sleep 20  # this is not a typo, stop_with_warning waits 10 seconds
 }
 
 # new world at the start, and at the start of each loop
