@@ -20,7 +20,6 @@ start_new_world() {
 	echo "##  Creating new world..."
 	new_world
 	start
-	sleep 3
 }
 
 taillog() {
@@ -51,7 +50,7 @@ stop() {
 }
 
 stop_with_warning() {
-	send 'say Stopping in 10 seconds! (Log back in after 1 minute)'
+	send 'say Stopping in 10 seconds!'
 	sleep 10
 	stop
 }

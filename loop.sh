@@ -36,8 +36,13 @@ stop_eventtail() {
 
 wait_for_startup() {
 	echo "##  Waiting for startup..."
-	sleep 15
-	save_world
+	local log_stat=`stat -F logs/latest.log`
+	local log_stat_update="$log_stat"
+	while [ "$log_stat" == "$log_stat_update" ]; do
+		sleep 1
+		log_stat_update=`stat -F logs/latest.log`
+	done
+	start_eventtail	
 }
 
 wait_3_hours() {
@@ -57,19 +62,25 @@ wait_3_hours() {
 	sleep 20  # this is not a typo, stop_with_warning waits 10 seconds
 }
 
+loop_stop() {
+	send 'say Time for a new world. (Log back in after 1 minute)'
+	stop_with_warning
+	stop_eventtail
+}
+
+loop_common() {
+	wait_for_startup
+	wait_3_hours
+	loop_stop
+	save_playerdata	
+}
+
 # new world at the start, and at the start of each loop
 new_loop() {
 	while true
 	do
 		start_new_world
-		start_eventtail
-		wait_for_startup
-		
-		wait_3_hours
-
-		stop_with_warning
-		stop_eventtail
-		save_playerdata
+		loop_common
 	done
 }
 
@@ -78,16 +89,12 @@ keep_loop() {
 	while true
 	do
 		start
-		start_eventtail
-		wait_for_startup
-		
-		wait_3_hours
-
-		stop_with_warning
-		stop_eventtail
-		save_playerdata
+		loop_common
 		new_world
 	done
 }
 
-if [ "$1" == "keep" ]; then keep_loop; else new_loop; fi
+if [ "$1" == "stop" ]; then loop_stop; exit; fi 
+if [ "$1" == "keep" ]; then keep_loop; exit; fi
+
+new_loop

@@ -6,11 +6,14 @@ import com.flowpowered.nbt.*
 
 import java.io.*
 import java.util.regex.*
+import groovy.json.*
 
-def mcScreenName = 'mc'
-def mcLogFile = 'logs/latest.log'
-def mcSavedPlayerDataDir = 'playerdata'
-def mcWorldPlayerDataDir = 'world/playerdata'
+mcScreenName = 'mc'
+mcLogFile = 'logs/latest.log'
+mcSavedPlayerDataDir = 'playerdata'
+mcWorldPlayerDataDir = 'world/playerdata'
+mcPlayers = [:]
+mcLastServerResponse = null
 
 /* 
  * file tail reader 
@@ -67,8 +70,20 @@ def writeTag = { file, Tag tag ->
 /* 
  * send command to minecraft server using screen 
  */
-def sendCommand = { cmd -> 
+def sendCommand(cmd) {  
     ['screen', '-x', mcScreenName, '-p', '0', '-X', 'stuff', cmd + '\r'].execute().waitFor()
+}
+
+def tellraw(String player, Map attributes) {
+    sendCommand "/tellraw $player ${JsonOutput.toJson(attributes)}"
+}
+
+/*
+ * 'command_' prefixed function are triggered by players sending messages starting
+ * with a colon, e.g. :uuid
+ */
+def command_uuid(String player, List args) { 
+    tellraw player, [text:"Your UUID is ${mcPlayers[player]}"]
 }
 
 
@@ -106,33 +121,46 @@ def checkPlayerData = { user, uuid ->
     }
 }
 
-
 /*
  * minecraft event handlers
  */
 
-def login = { user, uuid -> 
-    println "$user logged in with UUID of $uuid"
+def login = { player, uuid -> 
+    println "$player logged in with UUID of $uuid"
+    mcPlayers[player] = uuid
     // check to see if they already have a playerdata file or not
     def exists = new File("$mcWorldPlayerDataDir/${uuid}.dat").exists()
     sleep 5000  // give them 5 seconds to finish login
-    sendCommand "say ${exists?'Welcome back':'Welcome'} $user"
+    sendCommand "say ${exists?'Welcome back':'Welcome'} $player"
     if (!exists) { 
         // first login to this world...
-        checkPlayerData(user, uuid) 
+        checkPlayerData(player, uuid) 
     }
 }
 
-def logout = { user -> 
-    println "$user logged out" 
+def logout = { player -> 
+    println "$player logged out" 
 }
 
-def message = { user, message -> 
-    println "$user said '$message'" 
+def message = { player, message -> 
+    if (message.startsWith(':')) {
+        def commandArgs = message.substring(1).tokenize(' ')
+        "command_${commandArgs.head()}"(player, commandArgs.tail())
+    }
+    println "$player said '$message'" 
 }
 
-def action = { user, action -> 
-    println "$user did '$action'" 
+def action = { player, action -> 
+    println "$player did '$action'" 
+}
+
+def saved = { ->
+    println "saved"
+}
+
+def started = { startupTime ->
+    println "started ($startupTime)"
+    sendCommand "/save-all"
 }
 
 
@@ -158,6 +186,18 @@ new TailReader(mcLogFile).tail {
         // [Server thread/INFO]: [krsmes: Set the time to 0]
         case ~/.*\[Server.*\]: \[(.+): (.*)\]$/:
             action(m[1], m[2]); break
+
+        // [Server thread/INFO]: Done (2.031s)! For help, type "help" or "?"
+        case ~/.*\[Server.*\]: Done \((.+)\)\! .*$/:
+            started(m[1]); break
+
+        // [Server thread/INFO]: Saved the world
+        case ~/.*\[Server.*\]: Saved the world$/:
+            saved(); break
+
+        // [Server thread/INFO]: 
+        case ~/.*\[Server thread\/INFO\]: (.+)$/:
+            mcLastServerResponse = mc[1]; break
     }
 }
 
